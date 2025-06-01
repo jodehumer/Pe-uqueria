@@ -2,6 +2,7 @@
 const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 let semanaOffset = 0;
 let isAdmin = false;
+const userID = obtenerIDUsuario();
 
 function getStartOfWeek(offset = 0) {
   const now = new Date();
@@ -21,37 +22,15 @@ function obtenerIDUsuario() {
   return localStorage.getItem("usuarioID");
 }
 
-function obtenerDatosSemana(clave) {
-  const datos = localStorage.getItem(clave);
-  return datos ? JSON.parse(datos) : {};
+function getSemanaClave() {
+  const inicioSemana = getStartOfWeek(semanaOffset);
+  return inicioSemana.toISOString().slice(0, 10);
 }
 
-function guardarDatosSemana(clave, data) {
-  localStorage.setItem(clave, JSON.stringify(data));
-}
-
-function autoGenerarSemana() {
-  const hoy = new Date();
-  const inicioActual = getStartOfWeek(0);
-  const domingo = new Date(inicioActual);
-  domingo.setDate(domingo.getDate() + 6);
-
-  if (hoy > domingo) {
-    const inicioNueva = getStartOfWeek(1);
-    const claveNueva = `semana_${inicioNueva.toISOString().slice(0,10)}`;
-    if (!localStorage.getItem(claveNueva)) {
-      guardarDatosSemana(claveNueva, {});
-    }
-  }
-}
-
-function renderizarSemana() {
+function renderizarSemana(datosSemana) {
   const contenedor = document.getElementById("contenedor-semana");
   contenedor.innerHTML = "";
-
   const inicioSemana = getStartOfWeek(semanaOffset);
-  const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
-  const datosSemana = obtenerDatosSemana(claveSemana);
   const nombreSemana = `${formatFecha(inicioSemana)} - ${formatFecha(new Date(inicioSemana.getTime() + 5*86400000))}`;
   document.getElementById("nombre-semana").textContent = `Semana: ${nombreSemana}`;
 
@@ -61,10 +40,8 @@ function renderizarSemana() {
     const nombreDia = diasSemana[i];
     const claveDia = `${nombreDia}_${fecha.toISOString().slice(0,10)}`;
     const diaData = datosSemana[claveDia] || { apuntados: [], horario: "", max: 5 };
-    datosSemana[claveDia] = diaData;
 
     const estaLleno = diaData.apuntados.length >= diaData.max;
-    const userID = obtenerIDUsuario();
     const yaRegistrado = Object.values(datosSemana).some(d =>
       d.apuntados?.some(p => p.id === userID)
     );
@@ -97,55 +74,61 @@ function renderizarSemana() {
   if (isAdmin) {
     contenedor.innerHTML += `<button onclick="guardarCambiosAdmin()">💾 Guardar cambios</button>`;
   }
+}
 
-  guardarDatosSemana(claveSemana, datosSemana);
+function cargarSemanaRealtime() {
+  const claveSemana = getSemanaClave();
+  db.collection("semanas").doc(claveSemana).onSnapshot((doc) => {
+    const datosSemana = doc.exists ? doc.data() : {};
+    renderizarSemana(datosSemana);
+  });
 }
 
 function apuntar(claveDia) {
   const nombre = prompt("Introduce tu nombre:");
   if (!nombre) return;
-  const inicioSemana = getStartOfWeek(semanaOffset);
-  const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
-  const datosSemana = obtenerDatosSemana(claveSemana);
-  const userID = obtenerIDUsuario();
-
-  datosSemana[claveDia].apuntados.push({ nombre: nombre.trim(), id: userID });
-  guardarDatosSemana(claveSemana, datosSemana);
-  renderizarSemana();
+  const claveSemana = getSemanaClave();
+  db.collection("semanas").doc(claveSemana).get().then(doc => {
+    const datosSemana = doc.exists ? doc.data() : {};
+    datosSemana[claveDia] = datosSemana[claveDia] || { apuntados: [], horario: "", max: 5 };
+    datosSemana[claveDia].apuntados.push({ nombre: nombre.trim(), id: userID });
+    db.collection("semanas").doc(claveSemana).set(datosSemana);
+  });
 }
 
 function cancelarCita(claveDia, index) {
-  const inicioSemana = getStartOfWeek(semanaOffset);
-  const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
-  const datosSemana = obtenerDatosSemana(claveSemana);
-  datosSemana[claveDia].apuntados.splice(index, 1);
-  guardarDatosSemana(claveSemana, datosSemana);
-  renderizarSemana();
+  const claveSemana = getSemanaClave();
+  db.collection("semanas").doc(claveSemana).get().then(doc => {
+    const datosSemana = doc.exists ? doc.data() : {};
+    datosSemana[claveDia].apuntados.splice(index, 1);
+    db.collection("semanas").doc(claveSemana).set(datosSemana);
+  });
 }
 
 function guardarCambiosAdmin() {
-  const inicioSemana = getStartOfWeek(semanaOffset);
-  const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
-  const datosSemana = obtenerDatosSemana(claveSemana);
-  for (let i = 0; i < 6; i++) {
-    const fecha = new Date(inicioSemana);
-    fecha.setDate(fecha.getDate() + i);
-    const claveDia = `${diasSemana[i]}_${fecha.toISOString().slice(0,10)}`;
-    datosSemana[claveDia].horario = document.getElementById("h_" + claveDia).value;
-    datosSemana[claveDia].max = parseInt(document.getElementById("m_" + claveDia).value);
-  }
-  guardarDatosSemana(claveSemana, datosSemana);
-  renderizarSemana();
+  const claveSemana = getSemanaClave();
+  db.collection("semanas").doc(claveSemana).get().then(doc => {
+    const datosSemana = doc.exists ? doc.data() : {};
+    for (let i = 0; i < 6; i++) {
+      const fecha = new Date(getStartOfWeek(semanaOffset));
+      fecha.setDate(fecha.getDate() + i);
+      const claveDia = `${diasSemana[i]}_${fecha.toISOString().slice(0,10)}`;
+      datosSemana[claveDia] = datosSemana[claveDia] || { apuntados: [], horario: "", max: 5 };
+      datosSemana[claveDia].horario = document.getElementById("h_" + claveDia).value;
+      datosSemana[claveDia].max = parseInt(document.getElementById("m_" + claveDia).value);
+    }
+    db.collection("semanas").doc(claveSemana).set(datosSemana);
+  });
 }
 
 document.getElementById("semana-actual").addEventListener("click", () => {
   semanaOffset = 0;
-  renderizarSemana();
+  cargarSemanaRealtime();
 });
 
 document.getElementById("semana-siguiente").addEventListener("click", () => {
   semanaOffset = 1;
-  renderizarSemana();
+  cargarSemanaRealtime();
 });
 
 document.getElementById("btn-admin").addEventListener("click", () => {
@@ -153,11 +136,10 @@ document.getElementById("btn-admin").addEventListener("click", () => {
   const intento = prompt("Contraseña de peluquero:");
   if (intento === clave) {
     isAdmin = true;
-    renderizarSemana();
+    cargarSemanaRealtime();
   } else {
     alert("Contraseña incorrecta");
   }
 });
 
-autoGenerarSemana();
-renderizarSemana();
+cargarSemanaRealtime();
