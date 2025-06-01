@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Peñuquería</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
+    }
+  </script>
+</head>
+<body>
+  <h1>Peñuquería <button id="btn-admin" title="Panel">⚙️</button></h1>
+  <div id="semana-controls">
+    <button id="semana-actual">← Semana actual</button>
+    <span id="nombre-semana"></span>
+    <button id="semana-siguiente">Semana siguiente →</button>
+  </div>
+  <div id="contenedor-semana"></div>
+  <script src="app.js"></script>
+</body>
+</html>

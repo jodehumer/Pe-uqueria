@@ -1,0 +1,60 @@
+body {
+  background-color: #121212;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 10px;
+  margin: 0;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+#semana-controls {
+  text-align: center;
+  margin-bottom: 10px;
+}
+button {
+  background: #007BFF;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin: 0 5px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+button:disabled {
+  background: #555;
+}
+.dia {
+  background: #1e1e1e;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  box-shadow: 0 0 8px #00000050;
+}
+.dia h3 {
+  margin-top: 0;
+}
+.apuntados {
+  list-style: none;
+  padding-left: 15px;
+}
+.boton-apuntar, .boton-cancelar {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.boton-apuntar {
+  background-color: #007BFF;
+  color: white;
+}
+.boton-apuntar:disabled {
+  background-color: #555;
+}
+.boton-cancelar {
+  background-color: #e53935;
+  color: white;
+}
