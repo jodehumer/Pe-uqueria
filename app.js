@@ -117,7 +117,8 @@ function guardarCambiosAdmin() {
       datosSemana[claveDia].horario = document.getElementById("h_" + claveDia).value;
       datosSemana[claveDia].max = parseInt(document.getElementById("m_" + claveDia).value);
     }
-    db.collection("semanas").doc(claveSemana).set(datosSemana);
+   db.collection("semanas").doc(claveSemana).set(datosSemana, { merge: true });
+
   });
 }
 
