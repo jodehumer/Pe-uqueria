@@ -1,60 +1,144 @@
+
+:root {
+  --bg-color: #121212;
+  --card-bg: #1E1E1E;
+  --primary: #D32F2F;
+  --text: #F5F5F5;
+  --secondary-text: #B0B0B0;
+  --border-radius: 12px;
+  --shadow: 0 4px 8px rgba(0,0,0,0.2);
+  --font-main: 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background-color: #121212;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 10px;
   margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--text);
 }
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--card-bg);
+  box-shadow: var(--shadow);
 }
-#semana-controls {
-  text-align: center;
-  margin-bottom: 10px;
+
+header h1 {
+  font-size: 20px;
+  margin: 0;
+  color: var(--primary);
 }
-button {
-  background: #007BFF;
+
+#btn-admin {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.semana-control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background-color: #181818;
+  border-bottom: 1px solid #333;
+}
+
+.semana-control button {
+  background-color: var(--primary);
   color: white;
   border: none;
-  padding: 8px 12px;
-  margin: 0 5px;
-  border-radius: 6px;
+  padding: 8px 14px;
   font-size: 14px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
-button:disabled {
-  background: #555;
+
+.semana-control button:hover {
+  background-color: #b71c1c;
 }
-.dia {
-  background: #1e1e1e;
-  border-radius: 10px;
+
+main {
   padding: 12px;
-  margin: 10px 0;
-  box-shadow: 0 0 8px #00000050;
 }
+
+.dia {
+  background-color: var(--card-bg);
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
 .dia h3 {
   margin-top: 0;
+  color: var(--primary);
 }
+
 .apuntados {
   list-style: none;
-  padding-left: 15px;
+  padding-left: 0;
+  margin: 8px 0;
 }
-.boton-apuntar, .boton-cancelar {
+
+.apuntados li {
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button.boton-apuntar, button.boton-cancelar {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button.boton-apuntar {
+  background-color: var(--primary);
+  color: white;
+}
+
+button.boton-apuntar:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+}
+
+button.boton-cancelar {
+  background-color: transparent;
+  color: var(--secondary-text);
+  font-size: 12px;
+}
+
+input[type="text"], input[type="number"], input[type="password"] {
   width: 100%;
   padding: 8px;
-  margin-top: 5px;
+  margin-top: 4px;
+  border-radius: var(--border-radius);
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-}
-.boton-apuntar {
-  background-color: #007BFF;
+  background-color: #2a2a2a;
   color: white;
 }
-.boton-apuntar:disabled {
-  background-color: #555;
-}
-.boton-cancelar {
-  background-color: #e53935;
-  color: white;
+
+footer {
+  text-align: center;
+  padding: 20px 10px;
+  color: var(--secondary-text);
+  font-size: 12px;
 }
