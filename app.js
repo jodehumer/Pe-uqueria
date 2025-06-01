@@ -14,6 +14,13 @@ function formatFecha(date) {
   return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
 }
 
+function obtenerIDUsuario() {
+  if (!localStorage.getItem("usuarioID")) {
+    localStorage.setItem("usuarioID", "usr_" + Math.random().toString(36).substr(2, 9));
+  }
+  return localStorage.getItem("usuarioID");
+}
+
 function obtenerDatosSemana(clave) {
   const datos = localStorage.getItem(clave);
   return datos ? JSON.parse(datos) : {};
@@ -53,33 +60,42 @@ function renderizarSemana() {
     fecha.setDate(fecha.getDate() + i);
     const nombreDia = diasSemana[i];
     const claveDia = `${nombreDia}_${fecha.toISOString().slice(0,10)}`;
-    const diaData = datosSemana[claveDia] || { apuntados: [], horario: "17:00 - 19:00", max: 5 };
+    const diaData = datosSemana[claveDia] || { apuntados: [], horario: "", max: 5 };
     datosSemana[claveDia] = diaData;
 
     const estaLleno = diaData.apuntados.length >= diaData.max;
+    const userID = obtenerIDUsuario();
+    const yaRegistrado = Object.values(datosSemana).some(d =>
+      d.apuntados?.some(p => p.id === userID)
+    );
 
-    let listaHTML = diaData.apuntados.map((nombre, idx) => {
-      return `<li>${nombre} ${isAdmin ? `<button onclick="eliminarCita('${claveDia}', ${idx})">❌</button>` : ""}</li>`;
+    let listaHTML = diaData.apuntados.map((persona, idx) => {
+      const puedeCancelar = isAdmin || persona.id === userID;
+      return `<li>${persona.nombre} ${puedeCancelar ? `<button class="boton-cancelar" onclick="cancelarCita('${claveDia}', ${idx})">Cancelar</button>` : ""}</li>`;
     }).join("");
 
     contenedor.innerHTML += `
       <div class="dia">
         <h3>${nombreDia} (${formatFecha(fecha)})</h3>
-        <p><strong>Horario:</strong> ${diaData.horario}</p>
+        <p><strong>Horario:</strong> ${diaData.horario || "No definido"}</p>
         <p><strong>Apuntados (${diaData.apuntados.length}/${diaData.max}):</strong></p>
         <ul class="apuntados">${listaHTML}</ul>
-        ${!estaLleno ? `<button class="boton-apuntar" onclick="apuntar('${claveDia}')">Apuntarse</button>` : `<button disabled class="boton-apuntar">Completo</button>`}
+        ${
+          !yaRegistrado && !estaLleno ? `<button class="boton-apuntar" onclick="apuntar('${claveDia}')">Apuntarse</button>` : 
+          yaRegistrado ? `<button class="boton-apuntar" disabled>Ya estás apuntado</button>` : 
+          `<button class="boton-apuntar" disabled>Completo</button>`
+        }
         ${isAdmin ? `
-        <p>
+        <div style="margin-top:10px">
           <label>Horario: <input type="text" id="h_${claveDia}" value="${diaData.horario}"></label><br>
           <label>Máximo: <input type="number" id="m_${claveDia}" value="${diaData.max}" min="1" max="10"></label>
-        </p>
+        </div>
         ` : ""}
       </div>`;
   }
 
   if (isAdmin) {
-    contenedor.innerHTML += `<button onclick="guardarCambiosAdmin()">💾 Guardar cambios de peluquero</button>`;
+    contenedor.innerHTML += `<button onclick="guardarCambiosAdmin()">💾 Guardar cambios</button>`;
   }
 
   guardarDatosSemana(claveSemana, datosSemana);
@@ -91,13 +107,14 @@ function apuntar(claveDia) {
   const inicioSemana = getStartOfWeek(semanaOffset);
   const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
   const datosSemana = obtenerDatosSemana(claveSemana);
+  const userID = obtenerIDUsuario();
 
-  datosSemana[claveDia].apuntados.push(nombre.trim());
+  datosSemana[claveDia].apuntados.push({ nombre: nombre.trim(), id: userID });
   guardarDatosSemana(claveSemana, datosSemana);
   renderizarSemana();
 }
 
-function eliminarCita(claveDia, index) {
+function cancelarCita(claveDia, index) {
   const inicioSemana = getStartOfWeek(semanaOffset);
   const claveSemana = `semana_${inicioSemana.toISOString().slice(0,10)}`;
   const datosSemana = obtenerDatosSemana(claveSemana);
@@ -114,10 +131,8 @@ function guardarCambiosAdmin() {
     const fecha = new Date(inicioSemana);
     fecha.setDate(fecha.getDate() + i);
     const claveDia = `${diasSemana[i]}_${fecha.toISOString().slice(0,10)}`;
-    const nuevoHorario = document.getElementById("h_" + claveDia).value;
-    const nuevoMax = parseInt(document.getElementById("m_" + claveDia).value);
-    datosSemana[claveDia].horario = nuevoHorario;
-    datosSemana[claveDia].max = nuevoMax;
+    datosSemana[claveDia].horario = document.getElementById("h_" + claveDia).value;
+    datosSemana[claveDia].max = parseInt(document.getElementById("m_" + claveDia).value);
   }
   guardarDatosSemana(claveSemana, datosSemana);
   renderizarSemana();
